@@ -6,6 +6,10 @@ import {
   compose
 } from 'redux'
 
+// @ts-ignore
+import $$observable from 'redux/src/utils/symbol-observable' 
+import { Subject } from 'rxjs'
+
 import thunkMiddleware, { ThunkAction } from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 
@@ -27,7 +31,7 @@ const store = createStore(
     applyMiddleware(thunkMiddleware),
     applyMiddleware(loggerMiddleware),
     // @ts-ignore
-    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    // window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
   )
 );
 
@@ -74,14 +78,27 @@ store.subscribe(() => {
 });
 
 // 分发 action
-actions.increment();
-actions.increment();
-actions.decrement();
+actions.increment(); // 1
+actions.increment(); // 2
+actions.decrement(); // 1
 // @ts-ignore
 // store.dispatch(incrementAsync());
+
+store.subscribe(() => {
+  // 打印最终状态
+  console.log('最终状态：', store.getState());
+});
 actions.incrementAsync()
 
-// 打印最终状态
-console.log('最终状态：', store.getState());
+// @ts-ignore
+const observableSubscribe = store[$$observable]()
+
+const subject = new Subject();
+
+subject.subscribe({
+  next: (v) => console.log(`state from rxjs:`, v)
+});
+observableSubscribe.subscribe(subject)
+
 
 // 异步 action 形如 incrementAsync
